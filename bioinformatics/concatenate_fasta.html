@@ -7,11 +7,11 @@
 
 <h1>Test header</h1>
 <p id='test'>No</p>
-<button type="button" onclick="myFunction('Hello file!')">concatenate</button>
+<button type="button" onclick="myFunction()">concatenate</button>
 <script scr="../js_code/FileSaver.js"><script>
 <script>
 function make_text_file (text) {
-    var data = new Blob ([text],{type: 'text/plain'});
+    var data = new Blob (['Hello file!'],{type: 'text/plain'});
     saveAs(data, "concatenated.txt");
 }
 </script>
