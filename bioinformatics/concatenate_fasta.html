@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>My test page</title>
+</head>
+<body>
+
+<h1>Test header</h1>
+<p id='test'>No</p>
+<button type="button" onclick="myFunction('Hello file!')">concatenate</button>
+<script scr="../js_code/FileSaver.js"><script>
+<script>
+function make_text_file (text) {
+    var data = new Blob ([text],{type: 'text/plain'});
+    saveAs(data, "concatenated.txt");
+}
+</script>
+</body>
+</html>
