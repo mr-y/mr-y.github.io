@@ -1,19 +1,34 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>My test page</title>
+<title>FastaConcatenator</title>
 </head>
 <body>
 
-<h1>Test header</h1>
-<p id='test'>No</p>
-<button type="button" onclick="make_text_file()">concatenate</button>
+<h1>Fasta concatenator</h1>
+<p id='test'>This app concatenates fasta files. This is a javascript application and everything is done on your computer by your web browser. The maximum size of blobs for your browser will set a limit to how big files can be stored.</p>
+<input type="file" id="files" name="files[]" multiple />
+<!-- button type="button" onclick="concatenate_files()">concatenate</button -->
 <script src="../js_code/FileSaver.js"></script>
 <script>
+function handleFileSelect(evt) {
+    var files = evt.target.files; // FileList object
+    // files is a FileList of File objects. List some properties.
+    for (var i = 0, f; f = files[i]; i++) {
+	var reader = new FileReader();
+
+    }
+    document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
+  }
+
+  document.getElementById('files').addEventListener('change', handleFileSelect, false);
+    
+
 function make_text_file (text) {
     var data = new Blob (['Hello file!'],{type: 'text/plain'});
     saveAs(data, "concatenated.txt");
 }
+
 </script>
 </body>
 </html>
