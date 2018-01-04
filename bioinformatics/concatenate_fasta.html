@@ -1,31 +1,68 @@
 <!DOCTYPE html>
 <html>
+<meta charset="UTF-8"> 
 <head>
 <title>FastaConcatenator</title>
 </head>
 <body>
 
 <h1>Fasta concatenator</h1>
-<p id='test'>This app concatenates fasta files. This is a javascript application and everything is done on your computer by your web browser. The maximum size of blobs for your browser will set a limit to how big files can be stored.</p>
-<input type="file" id="files" name="files[]" multiple />
-<!-- button type="button" onclick="concatenate_files()">concatenate</button -->
+<p id='intro'>This app concatenates fasta files. This is a javascript application and everything is done on your computer by your web browser. The maximum size of blobs for your browser will set a limit to how big files can be stored.</p>
+<input type="file" id="files" multiple />
+<br/>
+<button type="button" onclick="make_text_file()">Get concatenated file</button>
+<p id="test">Text</p>
+<p id="file_name">Name</p>
 <script src="../js_code/FileSaver.js"></script>
 <script>
-function handleFileSelect(evt) {
-    var files = evt.target.files; // FileList object
-    // files is a FileList of File objects. List some properties.
-    for (var i = 0, f; f = files[i]; i++) {
-	var reader = new FileReader();
-
+var output = "No output generated";
+var alignment;
+function readMultipleFiles(evt) {
+    document.getElementById("test").innerHTML = "Got to 1";
+    if (window.File && window.FileReader && window.FileList && window.Blob) {
+	document.getElementById("test").innerHTML = "Got to 2";
+	var files = evt.target.files; // FileList object
+	// files is a FileList of File objects. List some properties.
+	if (files) {
+	    document.getElementById("test").innerHTML = "Got to 3 (nfiles= " + files.length + ")";
+	    for (var i = 0; i < files.length; ++i) {
+		var f = files[i];
+		var reader = new FileReader();
+		reader.onload = function (e) {
+		    var text = reader.result;
+		    document.getElementById("test").innerHTML = text;
+		    document.getElementById("file_name").innerHTML = f.name;
+		}
+		reader.readAsText(f);
+	    /*for (var i = 0, f; f = files[i]; i++) {
+		var reader = new FileReader();
+		reader.onload = (function(f) {
+		    return function(e) {
+		    	var contents = e.target.result;
+			alert( "Got the file.n" 
+			    +"name: " + f.name + "n"
+			    +"type: " + f.type + "n"
+			    +"size: " + f.size + " bytesn"
+			    + "starts with: " + contents.substr(1, contents.indexOf("n"))
+			); 
+		    };
+		})(f);*/
+	    }
+	}
+	else {
+	    alert("Failed to load files");
+	}
     }
-    document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
-  }
+    else {
+	alert('The File APIs are not fully supported by your browser.');
+    }
+}
 
-  document.getElementById('files').addEventListener('change', handleFileSelect, false);
+document.getElementById('files').addEventListener('change', readMultipleFiles, false);
     
 
 function make_text_file (text) {
-    var data = new Blob (['Hello file!'],{type: 'text/plain'});
+    var data = new Blob ([text],{type: 'text/plain'});
     saveAs(data, "concatenated.txt");
 }
 
