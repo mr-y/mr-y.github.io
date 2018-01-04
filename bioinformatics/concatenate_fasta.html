@@ -10,16 +10,15 @@
 <p id='intro'>This app concatenates fasta files. This is a javascript application and everything is done on your computer by your web browser. The maximum size of blobs for your browser will set a limit to how big files can be stored.</p>
 <input type="file" id="files" multiple />
 <br/>
-<button type="button" onclick="concatenate_files()">concatenate</button>
-<p id="test">Start</p>
+<button type="button" onclick="make_text_file()">Get concatenated file</button>
+<p id="test">Text</p>
+<p id="file_name">Name</p>
 <script src="../js_code/FileSaver.js"></script>
 <script>
-function concatenate_files() {
-    document.getElementById("test").innerHTML = "In concatenate";	
-}
+var output = "No output generated";
+var alignment;
 function readMultipleFiles(evt) {
     document.getElementById("test").innerHTML = "Got to 1";
-    var output = "No output generated";
     if (window.File && window.FileReader && window.FileList && window.Blob) {
 	document.getElementById("test").innerHTML = "Got to 2";
 	var files = evt.target.files; // FileList object
@@ -27,12 +26,14 @@ function readMultipleFiles(evt) {
 	if (files) {
 	    document.getElementById("test").innerHTML = "Got to 3 (nfiles= " + files.length + ")";
 	    for (var i = 0; i < files.length; ++i) {
+		var f = files[i];
 		var reader = new FileReader();
 		reader.onload = function (e) {
 		    var text = reader.result;
 		    document.getElementById("test").innerHTML = text;
+		    document.getElementById("file_name").innerHTML = f.name;
 		}
-		reader.readAsText(files[i]);
+		reader.readAsText(f);
 	    /*for (var i = 0, f; f = files[i]; i++) {
 		var reader = new FileReader();
 		reader.onload = (function(f) {
@@ -55,7 +56,6 @@ function readMultipleFiles(evt) {
     else {
 	alert('The File APIs are not fully supported by your browser.');
     }
-    make_text_file(output);
 }
 
 document.getElementById('files').addEventListener('change', readMultipleFiles, false);
