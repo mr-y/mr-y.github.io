@@ -10,13 +10,14 @@
 <p id='intro'>This app concatenates fasta files. This is a javascript application and everything is done on your computer by your web browser. The maximum size of blobs for your browser will set a limit to how big files can be stored.</p>
 <input type="file" id="files" multiple />
 <br/>
-<button type="button" onclick="make_text_file()">Get concatenated file</button>
+<button type="button" onclick="print_fasta()">Get concatenated file</button>
 <p id="test">Text</p>
 <p id="file_name">Name</p>
 <script src="../js_code/FileSaver.js"></script>
+<script src="alignment.js"></script>
 <script>
 var output = "No output generated";
-var alignment;
+var alignment = alignmentObject();
 function readMultipleFiles(evt) {
     document.getElementById("test").innerHTML = "Got to 1";
     if (window.File && window.FileReader && window.FileList && window.Blob) {
@@ -32,6 +33,11 @@ function readMultipleFiles(evt) {
 		    var text = reader.result;
 		    document.getElementById("test").innerHTML = text;
 		    document.getElementById("file_name").innerHTML = f.name;
+		    var sequences = text.split('>');
+		    for (i=0; i < sequences.length; ++i) {
+			var (name, seq) = sequences.split("\n|\r",1).shift();
+			alignment.add_seq(name,f.name,seq);
+		    }
 		}
 		reader.readAsText(f);
 	    /*for (var i = 0, f; f = files[i]; i++) {
@@ -57,7 +63,9 @@ function readMultipleFiles(evt) {
 	alert('The File APIs are not fully supported by your browser.');
     }
 }
-
+function print_fasta() {
+    make_text_file (alignment.get_sequences_as_fasta());
+}
 document.getElementById('files').addEventListener('change', readMultipleFiles, false);
     
 
