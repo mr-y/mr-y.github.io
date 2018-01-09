@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8"> 
+<head>
+<title>PartitionSplitter</title>
+</head>
+<style id="style"></style>
+<body>
+<div id="intro"></div>
+<h1>Partition splitter</h1>
+<p id='instructions'>This app split partitions in one file into separate files. Input should be in fasta format, and output will be given in fasta format.</p>
+<input type="file" id="fasta_file" />
+<br/>
+<button type="button" onclick="print_all_to_fasta()">Get concatenated file</button>
+<br/>
+<button type="button" onclick="get_partition_table()">Get partition table</button>
+<p id="file_name"></p>
+<script src="../js_code/FileSaver.js"></script>
+<script src="../js_code/alignment.js"></script>
+<script src="../js_code/intros.js"></script>
+<script>
+
+document.addEventListener("load", bio_apps_intro(document.getElementById("intro")));
+document.addEventListener("load", set_style_bio(document.getElementById("style")));
+//var field="intro";
+//var text = "Hello World";
+//document.getElementById(field).innerHTML = text;
+var alignment = new alignmentObject();
+var sequence_file_name = "";
+var new_partitions = {};
+function get_partition_table () {
+    alignment.print_all_partitions();
+    document.getElementById("file_name").innerHTML = "<table><tr><th>Partition</th><th>Positions</th></tr>\n" + alignment.get_partition_in_order_as_rows() + "</table>\n";
+}
+function process_file (f) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+	var text = reader.result;
+	var sequences = text.split('>');
+	var max_length = 0;
+	for (i=0; i < sequences.length; ++i) {
+	    if (sequences[i]) {
+		var seq = sequences[i].split(/\n\r|\n|\r/,);
+		var name = seq.shift();
+		while (seq[0] === undefined || seq[0] === null || seq[0] === "") { seq.shift(); }
+		seq = seq.join("");
+		seq.replace(/\s/g,"");
+		if (seq.length > max_length) { max_length = seq.length; }
+		sequence_file_name = f.name;
+		alignment.add_seq(name,sequence_file_name,seq);
+	    }
+	}
+	alignment.add_partition(sequence_file_name, max_length);
+	//document.getElementById("file_name").innerHTML = "<table><tr><th>File</th><th>Number of characters</th></tr>\n" + alignment.get_all_partitions_as_table_rows() + "</table>\n";
+    }
+    reader.readAsText(f);
+}
+function readSingleFile(evt) {
+    if (window.File && window.FileReader && window.FileList && window.Blob) {
+	var files = evt.target.; // FileList object
+	// files is a FileList of File objects. List some properties.
+	if (files) {
+    	    var f = files[0];
+	    process_file (f);
+	}
+	else {
+	    alert("Failed to load file");
+	}
+    }
+    else {
+	alert('The File APIs are not fully supported by your browser.');
+    }
+}
+function readPartitionFile (evt) {
+    if (window.File && window.FileReader && window.FileList && window.Blob) {
+        var files = evt.target.; // FileList object
+        // files is a FileList of File objects. List some properties.
+        if (files) {
+            var f = files[0];
+            var reader = new FileReader();
+	    reader.onload = function (e) {
+		var text = reader.result;
+		text = text.split(/\n\r|\n|\r/,);
+		for (i=0; i < text.length; ++i) {
+		    var words = text[i].split(/\s+/,);
+		    new_partitions[words[1]] = [];
+		    var numbers = words[world.length-1].split(/,/);
+		    
+		    new_partitions[words[1]][0] 
+		}
+	    }
+        }
+        else {
+            alert("Failed to load file");
+        }
+    }
+    else {
+        alert('The File APIs are not fully supported by your browser.');
+    }
+}
+function print_all_to_fasta() {
+    alignment.print_all_partitions();
+    make_text_file (alignment.get_sequences_as_fasta());
+}
+document.getElementById('fasta_files').addEventListener('change', readSingleFile, false);
+document.getElementById('partition_files').addEventListener('change', readPartitionFile, false);
+    
+
+function make_text_file (text) {
+    var data = new Blob ([text],{type: 'text/plain'});
+    saveAs(data, "concatenated.fst");
+}
+
+</script>
+</body>
+</html>
