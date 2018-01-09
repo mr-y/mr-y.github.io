@@ -4,55 +4,63 @@
 <head>
 <title>FastaConcatenator</title>
 </head>
+<style id="style"></style>
 <body>
-
+<div id="intro"></div>
 <h1>Fasta concatenator</h1>
-<p id='intro'>This app concatenates fasta files. This is a javascript application and everything is done on your computer by your web browser. The maximum size of blobs for your browser will set a limit to how big files can be stored.</p>
+<p id='instructions'>This app concatenates sequences given in separate fasta files.You can get the concatenated file using the "Get concatenated file" button. The order of sequences is as given in the table. You can get the start and end position of the sequences from the different files using the "Get partition table" button. You should be able to give files one by one or several at a time.</p>
 <input type="file" id="files" multiple />
 <br/>
-<button type="button" onclick="print_fasta()">Get concatenated file</button>
-<p id="test">Text</p>
-<p id="file_name">Name</p>
+<button type="button" onclick="print_all_to_fasta()">Get concatenated file</button>
+<br/>
+<button type="button" onclick="get_partition_table()">Get partition table</button>
+<p id="file_name"></p>
 <script src="../js_code/FileSaver.js"></script>
-<script src="alignment.js"></script>
+<script src="../js_code/alignment.js"></script>
+<script src="../js_code/intros.js"></script>
 <script>
+
+document.addEventListener("load", bio_apps_intro(document.getElementById("intro")));
+document.addEventListener("load", set_style_bio(document.getElementById("style")));
+//var field="intro";
+//var text = "Hello World";
+//document.getElementById(field).innerHTML = text;
 var output = "No output generated";
-var alignment = alignmentObject();
+var alignment = new alignmentObject();
+function get_partition_table () {
+    alignment.print_all_partitions();
+    document.getElementById("file_name").innerHTML = "<table><tr><th>Partition</th><th>Positions</th></tr>\n" + alignment.get_partition_in_order_as_rows() + "</table>\n";
+}
+function process_file (f) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+	var text = reader.result;
+	var sequences = text.split('>');
+	var max_length = 0;
+	for (i=0; i < sequences.length; ++i) {
+	    if (sequences[i]) {
+		var seq = sequences[i].split(/\n\r|\n|\r/,);
+		var name = seq.shift();
+		while (seq[0] === undefined || seq[0] === null || seq[0] === "") { seq.shift(); }
+		seq = seq.join("");
+		seq.replace(/\s/g,"");
+		if (seq.length > max_length) { max_length = seq.length; }
+		alignment.add_seq(name,f.name,seq);
+	    }
+	}
+	alignment.add_partition(f.name, max_length);
+	document.getElementById("file_name").innerHTML = "<table><tr><th>File</th><th>Number of characters</th></tr>\n" + alignment.get_all_partitions_as_table_rows() + "</table>\n";
+    }
+    reader.readAsText(f);
+}
 function readMultipleFiles(evt) {
-    document.getElementById("test").innerHTML = "Got to 1";
     if (window.File && window.FileReader && window.FileList && window.Blob) {
-	document.getElementById("test").innerHTML = "Got to 2";
 	var files = evt.target.files; // FileList object
 	// files is a FileList of File objects. List some properties.
 	if (files) {
-	    document.getElementById("test").innerHTML = "Got to 3 (nfiles= " + files.length + ")";
 	    for (var i = 0; i < files.length; ++i) {
 		var f = files[i];
-		var reader = new FileReader();
-		reader.onload = function (e) {
-		    var text = reader.result;
-		    document.getElementById("test").innerHTML = text;
-		    document.getElementById("file_name").innerHTML = f.name;
-		    var sequences = text.split('>');
-		    for (i=0; i < sequences.length; ++i) {
-			var (name, seq) = sequences.split("\n|\r",1).shift();
-			alignment.add_seq(name,f.name,seq);
-		    }
-		}
-		reader.readAsText(f);
-	    /*for (var i = 0, f; f = files[i]; i++) {
-		var reader = new FileReader();
-		reader.onload = (function(f) {
-		    return function(e) {
-		    	var contents = e.target.result;
-			alert( "Got the file.n" 
-			    +"name: " + f.name + "n"
-			    +"type: " + f.type + "n"
-			    +"size: " + f.size + " bytesn"
-			    + "starts with: " + contents.substr(1, contents.indexOf("n"))
-			); 
-		    };
-		})(f);*/
+		process_file (f);
 	    }
 	}
 	else {
@@ -63,7 +71,8 @@ function readMultipleFiles(evt) {
 	alert('The File APIs are not fully supported by your browser.');
     }
 }
-function print_fasta() {
+function print_all_to_fasta() {
+    alignment.print_all_partitions();
     make_text_file (alignment.get_sequences_as_fasta());
 }
 document.getElementById('files').addEventListener('change', readMultipleFiles, false);
@@ -71,7 +80,7 @@ document.getElementById('files').addEventListener('change', readMultipleFiles, f
 
 function make_text_file (text) {
     var data = new Blob ([text],{type: 'text/plain'});
-    saveAs(data, "concatenated.txt");
+    saveAs(data, "concatenated.fst");
 }
 
 </script>
