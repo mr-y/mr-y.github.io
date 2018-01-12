@@ -7,6 +7,30 @@ function alignmentObject () {
     this.partitions={};
 
     //Functions
+    this.pars_fasta = function (text,file_name) {
+	var sequences = text.split('>');
+        var max_length = 0;
+        for (i=0; i < sequences.length; ++i) {
+            if (sequences[i]) {
+                var seq = sequences[i].split(/\r\n|\n|\r/,);
+                var name = seq.shift();
+                while (seq[0] === undefined || seq[0] === null || seq[0] === "") { seq.shift(); }
+                seq = seq.join("");
+                seq.replace(/\s/g,"");
+                if (seq.length > max_length) { max_length = seq.length; }
+                this.add_seq(name,file_name,seq);
+            }
+        }
+	//alert(file_name + " " + text.length + " " +max_length + " " + i + " " + this.nOTUs() + " " + name.length);
+	this.add_partition(file_name, max_length);
+    }
+    this.nOTUs = function () {
+	var n=0;
+	for (OTU in this.OTUs) {
+	    if (this.OTUs.hasOwnProperty(OTU)) { ++n; }
+	}
+	return n;
+    }
     this.add_partition = function (partition, length=0) {
 	this.partitions[partition] = length;
     }
@@ -21,7 +45,7 @@ function alignmentObject () {
     this.get_all_partitions = function () {
 	var output =[];
 	for (part in this.partitions) {
-	    if (this.patitions.hasOwnProperty(part)) {
+	    if (this.partitions.hasOwnProperty(part)) {
 		output.push(part);
 	    }
 	}
@@ -56,22 +80,46 @@ function alignmentObject () {
 	}
     }
     this.split_partition = function (to_split, new_partitions) {
+	//var debug_text = "No split";
 	for (OTU in this.OTUs) {
 	    if (this.OTUs.hasOwnProperty(OTU)) {
+		//debug_text = "1";
 		for (part in new_partitions) {
+		    //debug_text = "1... 2"
 		    if (new_partitions.hasOwnProperty(part)) {
+			//debug_text = "1... 2... 3... " + to_split;
 			if (this.OTUs[OTU][to_split]) {
-			    this.OTUs[OTU][part] = this.OTUs[OTU][to_split].substring(new_partitions[part][0]-1,new_partitions[part][1]-1);
+			    //debug_text = "1... 2... 3... 4"
+			    for (i=0; i<new_partitions[part].length; i+=2) {
+				//debug_text = "1... 2... 3... 4... i"
+				var slash = new RegExp("/");
+				if (slash.test(new_partitions[part][i+1])) {
+				    interval = new_partitions[part][i+1].split(/\//);
+				    this.OTUs[OTU][part] = "";
+				    for (j=new_partitions[part][i]; j<interval[0] && j<this.OTUs[OTU][to_split].length;j+=interval[1]) {
+					this.OTUs[OTU][part] += this.OTUs[OTU][to_split][j-1];
+				    }
+				}
+				else {
+				    //debug_text = "Split" + OTU + " " + part + " ";
+				    this.OTUs[OTU][part] = this.OTUs[OTU][to_split].substring(new_partitions[part][0]-1,new_partitions[part][1]-1);
+				}
+			    }
+			    if (this.partitions[part] === undefined) { this.partitions[part] = this.OTUs[OTU][part].length; }
+			    else if (this.partitions[part].length < this.OTUs[OTU][part].length) { this.partitions[part] = this.OTUs[OTU][part].length; }
 			}
 		    }
 		}
 		delete this.OTUs[OTU][to_split];
 	    }
 	}
+	delete this.partitions[to_split];
+	//return debug_text;
     }
     this.get_sequences_as_fasta = function () {
 	var fasta = "";
 	var lengths = [];
+	alert(this.partition_order);
 	for (OTU in this.OTUs) {
 	    for (i =0; i < this.partition_order.length; ++i) {
 		if (OTU[this.partition_order[i]] !== undefined && length[i] < OTU[this.partition_order[i]].length) {
