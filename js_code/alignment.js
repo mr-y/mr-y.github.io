@@ -10,7 +10,7 @@ function alignmentObject () {
     this.pars_fasta = function (text,file_name) {
 	var sequences = text.split('>');
         var max_length = 0;
-        for (i=0; i < sequences.length; ++i) {
+        for (var i=0; i < sequences.length; ++i) {
             if (sequences[i]) {
                 var seq = sequences[i].split(/\r\n|\n|\r/,);
                 var name = seq.shift();
@@ -54,7 +54,7 @@ function alignmentObject () {
     this.get_partition_in_order_as_rows = function () {
 	var output = "";
 	var start = 1;
-	for (i=0; i < this.partition_order.length; ++i) {
+	for (var i=0; i < this.partition_order.length; ++i) {
 	    output += "<tr><td>" + this.partition_order[i] + "</td><td>" + start + "-" + (start-1+this.partitions[this.partition_order[i]]) + "</td></tr>\n";
 	    start += this.partitions[this.partition_order[i]];
 	}
@@ -119,12 +119,14 @@ function alignmentObject () {
     this.getGC = function () {
 	var nGC=0;
 	var n=0;
+	var debug_text = "N";
 	for (OTU in this.OTUs) {
 	    if (this.OTUs.hasOwnProperty(OTU)) {
-		for (i =0; i < this.partition_order.length; ++i) {
+		for (var i = 0; i < this.partition_order.length; ++i) {
 	    	    if (OTU[this.partition_order[i]] !== undefined && length[i] < OTU[this.partition_order[i]].length) {
-	    		for (j=0; j < this.OTUs[OTU][this.partition_order[i]].length; ++j) {
+	    		for (var j=0; j < this.OTUs[OTU][this.partition_order[i]].length; ++j) {
 			    ++n;
+			    debug_text = this.OTUs[OTU][this.partition_order[i]][j];
 			    if (this.OTUs[OTU][this.partition_order[i]][j] === "G") { ++nGC; }
 			    else if (this.OTUs[OTU][this.partition_order[i]][j] === "C") { ++nGC; }
 			    else if (this.OTUs[OTU][this.partition_order[i]][j] === "g") { ++nGC; }
@@ -134,14 +136,15 @@ function alignmentObject () {
 		}
 	    }
 	}
-	return nGC/n;
+	return debug_text;
+	//return nGC/n;
     }
     this.get_sequences_as_fasta = function () {
 	var fasta = "";
 	var lengths = [];
 	//alert(this.partition_order);
 	for (OTU in this.OTUs) {
-	    for (i =0; i < this.partition_order.length; ++i) {
+	    for (var i =0; i < this.partition_order.length; ++i) {
 		if (OTU[this.partition_order[i]] !== undefined && length[i] < OTU[this.partition_order[i]].length) {
 		    length[i] = OTU[this.partition_order[i]].length;
 		}
@@ -150,7 +153,7 @@ function alignmentObject () {
 	for (OTU in this.OTUs) {
 	    if (this.OTUs.hasOwnProperty(OTU)) {
 		fasta += ">" + OTU + this.linebreak;
-		for (i = 0; i < this.partition_order.length; ++i) {
+		for (var i = 0; i < this.partition_order.length; ++i) {
 		    if (this.OTUs[OTU][this.partition_order[i]] !== undefined) {
 			fasta += this.OTUs[OTU][this.partition_order[i]];
 			if (this.OTUs[OTU][this.partition_order[i]].length < this.partitions[this.partition_order[i]]) {
