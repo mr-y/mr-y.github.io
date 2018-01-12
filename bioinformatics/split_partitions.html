@@ -120,10 +120,10 @@ function split_partitions () {
 	var text = "<table>\n<tr><th>Partitions</th></tr>\n";
 	for (i=0; i<partitions.length; ++i) {
 	    text += "<tr><td><button type=\"button\" onclick=\"";
-	    text += "print_partition(";
-	    //text += partitions[i];
+	    text += "print_partition('";
+	    text += partitions[i];
 	    //text += "\"\)>";
-	    text += ")\">";
+	    text += "')\">";
 	    text += partitions[i];
 	    text += "</button></td></tr>\n";
 	}
