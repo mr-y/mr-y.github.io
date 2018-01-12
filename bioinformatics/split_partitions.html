@@ -8,11 +8,12 @@
 <body>
 <div id="intro"></div>
 <h1>Partition splitter</h1>
-<p id='instructions'>This app split partitions in one file into separate files. Input should be in fasta format, and output will be given in fasta format.</p>
-<input type="file" id="fasta_file" />
+<p id='instructions'>This app split partitions in one file into separate files. The input alignment should be in fasta format, and the output alignments will be given in fasta format. The input partitions should be in the format used by RAxML</p>
+Alignment file (FASTA): <input type="file" id="fasta_file" />
+<p id="nOTUs"></p>
+Partition file: <input type="file" id="partition_file" />
 <br/>
-<input type="file" id="partition_file" />
-<br/>
+<div id="partitions"></div>
 <div id="options">
 </div>
 
@@ -54,6 +55,7 @@ function readSingleFile(evt) {
 	if (files) {
     	    var f = files[0];
 	    process_file (f);
+	    document.getElementById("nOTUs").innerHTML = "Number of OTUs: " + alignment.nOTUs();
 	}
 	else {
 	    alert("Failed to load file");
@@ -74,24 +76,27 @@ function readPartitionFile (evt) {
 		var text = reader.result;
 		//var textReg = new RegExp("\w");
 		text = text.split(/\r\n|\n|\r/,);
-		var debug_text = "<ul>";
+		var debug_text = "<table>\n<tr><th>Partitions</th><th>Columns</th></tr>\n";
 		for (i=0; i < text.length; ++i) {
 		    if (text[i]) {
 			//debug_text += "<li>" + text[i] + "</li>";
 			var words = text[i].split(/\s+/,);
 			var numbers = text[i].split(/=/,);
-			debug_text += "<li>" + words[1];
 			if (numbers[1] !== undefined) {
+			    debug_text += "<tr><td>" + words[1] + "</td><td>";
 			    new_partitions[words[1]] = [];
 			    new_partitions[words[1]] = numbers[1].split(/-|, /);
-			    debug_text += " " + new_partitions[words[1]];
+			    for (j=0; j < new_partitions[words[1]].length; j += 2) {
+				if (j > 0) { debug_text += ", "; }
+				debug_text += new_partitions[words[1]][j] + "-" + new_partitions[words[1]][j+1];
+			    }
+			    debug_text += "</td></tr>\n";
 			}
-			debug_text += "</li>";
 		    }
 		}
-		debug_text += "</ul>";
+		debug_text += "</table>\n";
 		//alert(i);
-		document.getElementById("debug").innerHTML = debug_text;
+		document.getElementById("partitions").innerHTML = debug_text;
 	    }
 	    reader.readAsText(f);
         }
@@ -109,7 +114,7 @@ function print_all_to_fasta() {
     make_text_file (alignment.get_sequences_as_fasta());
 }
 function print_partition(part) {
-    document.getElementById("debug").innerHTML = part;
+    //document.getElementById("debug").innerHTML = part;
     alignment.partition_order = [ part ];
     make_text_file (alignment.get_sequences_as_fasta(), part + ".fst");
 }
@@ -117,15 +122,20 @@ function split_partitions () {
     if (alignment !== undefined && new_partitions !== undefined) {
 	alignment.split_partition(sequence_file_name,new_partitions);
 	var partitions = alignment.get_all_partitions();
-	var text = "<table>\n<tr><th>Partitions</th></tr>\n";
+	var text = "<table>\n<tr><th>Partitions</th><th>Length</th><th>GC content</th></tr>\n";
 	for (i=0; i<partitions.length; ++i) {
+	    alignment.partition_order = [ part ];
 	    text += "<tr><td><button type=\"button\" onclick=\"";
 	    text += "print_partition('";
 	    text += partitions[i];
 	    //text += "\"\)>";
 	    text += "')\">";
 	    text += partitions[i];
-	    text += "</button></td></tr>\n";
+	    text += "</button></td><td>";
+	    text += alignment.partitions[partitions[i]];
+	    //text += "</td><td>";
+	    //text += alignment.getGC();
+	    text += "</td></tr>";
 	}
 	text += "</table>\n";
 	document.getElementById("options").innerHTML = text;

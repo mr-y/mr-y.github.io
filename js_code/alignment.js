@@ -102,7 +102,7 @@ function alignmentObject () {
 				}
 				else {
 				    //debug_text = "Split" + OTU + " " + part + " ";
-				    this.OTUs[OTU][part] = this.OTUs[OTU][to_split].substring(new_partitions[part][0]-1,new_partitions[part][1]-1);
+				    this.OTUs[OTU][part] = this.OTUs[OTU][to_split].substring(new_partitions[part][0]-1,new_partitions[part][1]);
 				}
 			    }
 			    if (this.partitions[part] === undefined) { this.partitions[part] = this.OTUs[OTU][part].length; }
@@ -116,10 +116,30 @@ function alignmentObject () {
 	delete this.partitions[to_split];
 	//return debug_text;
     }
+    this.getGC = function () {
+	var nGC=0;
+	var n=0;
+	for (OTU in this.OTUs) {
+	    if (this.OTUs.hasOwnProperty(OTU)) {
+		for (i =0; i < this.partition_order.length; ++i) {
+	    	    if (OTU[this.partition_order[i]] !== undefined && length[i] < OTU[this.partition_order[i]].length) {
+	    		for (j=0; j < this.OTUs[OTU][this.partition_order[i]].length; ++j) {
+			    ++n;
+			    if (this.OTUs[OTU][this.partition_order[i]][j] === "G") { ++nGC; }
+			    else if (this.OTUs[OTU][this.partition_order[i]][j] === "C") { ++nGC; }
+			    else if (this.OTUs[OTU][this.partition_order[i]][j] === "g") { ++nGC; }
+			    else if (this.OTUs[OTU][this.partition_order[i]][j] === "c") { ++nGC; }
+			}
+		    }
+		}
+	    }
+	}
+	return nGC/n;
+    }
     this.get_sequences_as_fasta = function () {
 	var fasta = "";
 	var lengths = [];
-	alert(this.partition_order);
+	//alert(this.partition_order);
 	for (OTU in this.OTUs) {
 	    for (i =0; i < this.partition_order.length; ++i) {
 		if (OTU[this.partition_order[i]] !== undefined && length[i] < OTU[this.partition_order[i]].length) {
