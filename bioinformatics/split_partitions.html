@@ -8,7 +8,7 @@
 <body>
 <div id="intro"></div>
 <h1>Partition splitter</h1>
-<p id='instructions'>This app split partitions in one file into separate files. The input alignment should be in fasta format, and the output alignments will be given in fasta format. The input partitions should be in the format used by RAxML</p>
+<p id='instructions'>This app split partitions of an alignment into separate alignments. The input alignment should be in fasta format, and the output alignments will be given in fasta format. The input partitions should be in the format used by RAxML, but does not allow ',' in the numbers.</p>
 Alignment file (FASTA): <input type="file" id="fasta_file" />
 <p id="nOTUs"></p>
 Partition file: <input type="file" id="partition_file" />
@@ -44,7 +44,7 @@ function process_file (f) {
     reader.onload = function (e) {
 	var text = reader.result;
 	sequence_file_name = f.name;
-	alignment.pars_fasta(text, sequence_file_name);
+	document.getElementById("nOTUs").innerHTML = "Number of OTUs: " + alignment.pars_fasta(text, sequence_file_name);
     }
     reader.readAsText(f);
 }
@@ -55,7 +55,6 @@ function readSingleFile(evt) {
 	if (files) {
     	    var f = files[0];
 	    process_file (f);
-	    document.getElementById("nOTUs").innerHTML = "Number of OTUs: " + alignment.nOTUs();
 	}
 	else {
 	    alert("Failed to load file");
@@ -122,20 +121,20 @@ function split_partitions () {
     if (alignment !== undefined && new_partitions !== undefined) {
 	alignment.split_partition(sequence_file_name,new_partitions);
 	var partitions = alignment.get_all_partitions();
-	var text = "<table>\n<tr><th>Partitions</th><th>Length</th><th>GC content</th></tr>\n";
+	var text = "</br>Separate partitions:</br>\n";
+	text += "<table>\n<tr><th>Partitions</th><th>Length</th><th>GC content</th></tr>\n";
 	for (i=0; i<partitions.length; ++i) {
 	    alignment.partition_order = [ partitions[i] ];
 	    //document.getElementById("options").innerHTML = "<p>" + alignment.partition_order + "</p>";
 	    text += "<tr><td><button type=\"button\" onclick=\"";
 	    text += "print_partition('";
 	    text += partitions[i];
-	    //text += "\"\)>";
 	    text += "')\">";
 	    text += partitions[i];
 	    text += "</button></td><td>";
 	    text += alignment.partitions[partitions[i]];
 	    text += "</td><td>";
-	    text += alignment.getGC();
+	    text += alignment.getGC().toFixed(2);
 	    text += "</td></tr>";
 	}
 	text += "</table>\n";

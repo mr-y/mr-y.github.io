@@ -23,6 +23,7 @@ function alignmentObject () {
         }
 	//alert(file_name + " " + text.length + " " +max_length + " " + i + " " + this.nOTUs() + " " + name.length);
 	this.add_partition(file_name, max_length);
+	return this.nOTUs();
     }
     this.nOTUs = function () {
 	var n=0;
@@ -80,18 +81,12 @@ function alignmentObject () {
 	}
     }
     this.split_partition = function (to_split, new_partitions) {
-	//var debug_text = "No split";
 	for (OTU in this.OTUs) {
 	    if (this.OTUs.hasOwnProperty(OTU)) {
-		//debug_text = "1";
 		for (part in new_partitions) {
-		    //debug_text = "1... 2"
 		    if (new_partitions.hasOwnProperty(part)) {
-			//debug_text = "1... 2... 3... " + to_split;
 			if (this.OTUs[OTU][to_split]) {
-			    //debug_text = "1... 2... 3... 4"
 			    for (i=0; i<new_partitions[part].length; i+=2) {
-				//debug_text = "1... 2... 3... 4... i"
 				var slash = new RegExp("/");
 				if (slash.test(new_partitions[part][i+1])) {
 				    interval = new_partitions[part][i+1].split(/\//);
@@ -101,7 +96,6 @@ function alignmentObject () {
 				    }
 				}
 				else {
-				    //debug_text = "Split" + OTU + " " + part + " ";
 				    this.OTUs[OTU][part] = this.OTUs[OTU][to_split].substring(new_partitions[part][0]-1,new_partitions[part][1]);
 				}
 			    }
@@ -114,19 +108,16 @@ function alignmentObject () {
 	    }
 	}
 	delete this.partitions[to_split];
-	//return debug_text;
     }
     this.getGC = function () {
 	var nGC=0;
 	var n=0;
-	var debug_text = "N";
 	for (OTU in this.OTUs) {
 	    if (this.OTUs.hasOwnProperty(OTU)) {
 		for (var i = 0; i < this.partition_order.length; ++i) {
-	    	    if (OTU[this.partition_order[i]] !== undefined && length[i] < OTU[this.partition_order[i]].length) {
+	    	    if (this.OTUs[OTU][this.partition_order[i]] !== undefined) {
 	    		for (var j=0; j < this.OTUs[OTU][this.partition_order[i]].length; ++j) {
 			    ++n;
-			    debug_text = this.OTUs[OTU][this.partition_order[i]][j];
 			    if (this.OTUs[OTU][this.partition_order[i]][j] === "G") { ++nGC; }
 			    else if (this.OTUs[OTU][this.partition_order[i]][j] === "C") { ++nGC; }
 			    else if (this.OTUs[OTU][this.partition_order[i]][j] === "g") { ++nGC; }
@@ -136,8 +127,7 @@ function alignmentObject () {
 		}
 	    }
 	}
-	return debug_text;
-	//return nGC/n;
+	return nGC/n;
     }
     this.get_sequences_as_fasta = function () {
 	var fasta = "";
