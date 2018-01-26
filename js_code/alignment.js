@@ -7,13 +7,40 @@ function alignmentObject () {
     this.partitions={};
 
     //Functions
-    this.pars_fasta = function (text,file_name) {
+    this.pars_fasta = function (text,file_name,prefix="",sufix="") {
 	var sequences = text.split('>');
         var max_length = 0;
         for (var i=0; i < sequences.length; ++i) {
             if (sequences[i]) {
                 var seq = sequences[i].split(/\r\n|\n|\r/,);
                 var name = seq.shift();
+		if (prefix) {
+		    var q=0;
+		    for (var p = 0; p < name.length; ++p) {
+			if (name[p] === prefix[0]) {
+			    while (q < prefix.length && name[p+q] === prefix[q]) { ++q; }
+			    if (q === prefix.length && p+q < name.length) {
+				name = name.substring(p+q);
+				break;
+			    }
+			}
+		    }
+		}
+		if (sufix) {
+		    //alert (sufix);
+		    var last_match=0;
+		    for (var p = 0; p < name.length; ++p) {
+			if (name[p] === sufix[0]) {
+			    var q=0;
+			    while (q < sufix.length && name[p+q] === sufix[q]) { ++q; }
+			    if (q === sufix.length && p+q < name.length) {
+				last_match = p;
+			    }
+			    //alert ( last_match );
+			}
+		    }
+		    if (last_match > 0) { name = name.substring(0,last_match); }
+		}
                 while (seq[0] === undefined || seq[0] === null || seq[0] === "") { seq.shift(); }
                 seq = seq.join("");
                 seq.replace(/\s/g,"");
@@ -21,7 +48,6 @@ function alignmentObject () {
                 this.add_seq(name,file_name,seq);
             }
         }
-	//alert(file_name + " " + text.length + " " +max_length + " " + i + " " + this.nOTUs() + " " + name.length);
 	this.add_partition(file_name, max_length);
 	return this.nOTUs();
     }
@@ -132,7 +158,6 @@ function alignmentObject () {
     this.get_sequences_as_fasta = function () {
 	var fasta = "";
 	var lengths = [];
-	//alert(this.partition_order);
 	for (OTU in this.OTUs) {
 	    for (var i =0; i < this.partition_order.length; ++i) {
 		if (OTU[this.partition_order[i]] !== undefined && length[i] < OTU[this.partition_order[i]].length) {

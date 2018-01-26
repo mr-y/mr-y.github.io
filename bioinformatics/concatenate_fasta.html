@@ -8,7 +8,13 @@
 <body>
 <div id="intro"></div>
 <h1>Fasta concatenator</h1>
-<p id='instructions'>This app concatenates sequences given in separate fasta files.You can get the concatenated file using the "Get concatenated file" button. The order of sequences is as given in the table. You can get the start and end position of the sequences from the different files using the "Get partition table" button. You should be able to give files one by one or several at a time.</p>
+<p id='instructions'>This app concatenates sequences given in separate fasta files.You can get the concatenated file using the "Get concatenated file" button. The order of sequences is as given in the table. You can get the start and end position of the sequences from the different files using the "Get partition table" button. You should be able to give files one by one or several at a time. You can exclude the beginning or end of sequence names (e.g. accession numbers for individual sequences that are not part of the sequence name). The given motif will be interpreted strictly (including case sensitivity)</p>
+<form>
+<input type="checkbox" id="prefix"> Disregard beginning of names until and including:
+<input type="text" id="delimitor_pre"></br>
+<input type="checkbox" id="sufix"> Disregard ending of name from and including:
+<input type="text" id="delimitor_suf">
+</form>
 <input type="file" id="files" multiple />
 <br/>
 <button type="button" onclick="print_all_to_fasta()">Get concatenated file</button>
@@ -35,7 +41,15 @@ function process_file (f) {
     var reader = new FileReader();
     reader.onload = function (e) {
 	var text = reader.result;
-	alignment.pars_fasta(text, f.name);
+	var prefix = "";
+	var sufix= "";
+	if (document.getElementById("prefix").checked) {
+	    prefix = document.getElementById("delimitor_pre").value
+	}
+	if (document.getElementById("sufix").checked) {
+	    sufix = document.getElementById("delimitor_suf").value
+	}
+	alignment.pars_fasta(text, f.name, prefix, sufix);
 	document.getElementById("file_name").innerHTML = "<table><tr><th>File</th><th>Number of characters</th></tr>\n" + alignment.get_all_partitions_as_table_rows() + "</table>\n";
     }
     reader.readAsText(f);
