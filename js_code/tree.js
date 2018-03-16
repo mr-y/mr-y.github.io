@@ -145,7 +145,7 @@ function tree () {
 	    for (var i=0; i < node.children.length; ++i) {
 		values[i] = subColless(node.children[i]);
 		sum[0] += values[i][0];
-		sum[1] += values[i][1]
+		sum[1] += values[i][1];
 	    }
 	    if (node.children.length === 2) {
 		sum[0] += Math.abs(values[0][1]-values[1][1]);
@@ -205,5 +205,14 @@ function tree () {
 	value /= T * Math.sqrt(1/(12*(nodedepths.length-2)));
 	return value;
 	//return nodedepths;
+    }
+}
+
+function parsimony () {
+    this.tree = new tree();
+    this.alignment = new alignment();
+    this.score_partitions = function () {
+	
+
     }
 }
