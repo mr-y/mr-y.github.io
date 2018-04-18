@@ -155,6 +155,7 @@ function tree () {
 	}
 	return subColless(this.root)[0];
     }
+
     this.B1 = function () {
 	function subB1 ( node ) {
 	    var values = [];
@@ -206,6 +207,48 @@ function tree () {
 	return value;
 	//return nodedepths;
     }
+    /*this.add_svg_annotation = function () {
+	function sub_add_svg (node, n_left, scale_w, scale_x) {
+	    var n_tot;
+	    var daughters;
+	    for (var i=0;;) {}
+	}
+    }*/
+}
+/*
+function svg_annotations () {
+    function polyline (line) {
+	this.points = line;
+	this.style;
+	this.add_to_drawing = function (drawing) {
+	    drawing += "<polyline points=\"" + this.points + "\"";
+	    if (this.style) drawing += " style=\"" + this.style + "\"";
+	    drawing += " />\n";
+	}
+    }
+    function text (text, x, y) {
+	this.text = text;
+	this.x = x;
+	this.y = y;
+	this.fill;
+	this.transform;
+	this.add_to_drawing = function (drawing) {
+	    drawing += "<text x=\"" + x + "\" y=\"";
+	    if (this.fill) drawing += " fill=\"" + this.fill + "\"";
+	    if (this.transform) rawing += " transform=\"" + this.transform + "\"";
+	    drawing += ">" + this.text + "</text>";
+	}
+    }
+    this.objects = [];
+    this.add_branch = function (branch_length, start, scale=1, end) {
+	this.objects.push(new polyline(start[0] + "," + start[1] + " " + start[0] + "," + (start[0]- branch_length * scale) + end[0] + "," + end[1]))
+    }
+    this.add_branch_label = function (label, branch_length, start, scale=1, x_offset, y_offset) {
+	this.objects.push(new text (label, start[0]-x_offset, start[1] + branch_length * scale - y_offset ));
+    }
+    this.add_tip_label = function(label, start, x_offset, y_offset) {
+	this.objects.push(new text (label, start[0]-x_offset, start[1] - y_offset ));
+    }
 }
 
 function parsimony () {
@@ -216,3 +259,4 @@ function parsimony () {
 
     }
 }
+*/
