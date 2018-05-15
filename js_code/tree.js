@@ -10,6 +10,7 @@ function tree () {
     //this.node = new node();
     //this._root = node;
     var n_branches = 0;
+    this.scores = {};
     this.pars_newick = function (tree) { // tree should be a textstring witha newick formated tree
 	//var present = this._root;
 	var present = this.root;
@@ -206,6 +207,82 @@ function tree () {
 	value /= T * Math.sqrt(1/(12*(nodedepths.length-2)));
 	return value;
 	//return nodedepths;
+    }
+    this.calc_parsimony_scores = function (alignment, alphabet) {
+	//if (this.scores === undefined) { this.scores = {}; }
+	var translation = alphabet;
+	this.add_parsimony = function (node) {
+	    if (this.scores === undefined) { alert("this.scores === undefined"); }
+	    if (node.children.length > 0) {
+    		for (var i=0; i < node.children.length; ++i) {
+		    this.add_parsimony(node.children[i]);
+		}
+	    }
+	    if (node.name && alignment.OTUs[node.name]) {
+		node.seq = alignment.OTUs[node.name];
+		for (var i=0; i < node.children.length; ++i) {
+		    var done_part = {};
+                    for (var part in node.seq) {
+			if (node.seq.hasOwnProperty(part) && node.children[i]['seq'].hasOwnProperty(part)) {
+			    if (this.scores[part] === undefined) { this.scores[part] =[]; }
+			    for (var pos=0; pos < node.seq[part].length; ++pos) {
+				var comp = translation.pars_compare(node.seq[part][pos],node.children[i]['seq'][part][pos]);
+			       	if (comp[1]) {
+				    if (!this.scores[part][pos]) { this.scores[part][pos] = 0; }
+				    this.scores[part][pos] += comp[1];
+			       	}
+			    }
+			    done_pars[part] = true;
+			}
+		    }
+		    for (var part in node.children[i]['seq']) {
+			if (node.children[i]['seq'].hasOwnProperty(part) && !done_part[part]) {
+			    node.seq[part] = [];
+			    for (var pos=0; pos < node.children[i]['seq'][part].length; ++pos) {
+				node.seq[part][pos] = node.children[i]['seq'][part][pos];
+			    }
+			}
+		    }
+                }
+	    }
+	    else {
+		if (!node.seq) { node.seq = {}; }
+		for (var i=0; i < node.children.length; ++i) {
+		    for (var part in node.children[i]['seq']) {
+			if (node.children[i]['seq'].hasOwnProperty(part)) {
+			    if (this.scores[part] === undefined) { this.scores[part] = []; }
+			    if (node.seq[part]) {
+				for (var pos=0; pos < node.children[i]['seq'][part].length; ++pos) {
+				    var comp = translation.pars_compare(node.seq[part][pos],node.children[i]['seq'][part][pos]);
+				    //alert (node.seq[part][pos] + " " + node.children[i]['seq'][part][pos] + " " + comp);
+				    node.seq[part][pos] = comp[0];
+				    if (!this.scores[part][pos]) { this.scores[part][pos] = 0; }
+				    this.scores[part][pos]+= comp[1];
+				}
+			    }
+			    else {
+				node.seq[part] = [];
+				for (var pos=0; pos < node.children[i]['seq'][part].length; ++pos) {
+				    node.seq[part][pos] = node.children[i]['seq'][part][pos];
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+	this.add_parsimony (this.root);
+    }
+    this.tot_score = function () {
+	var sum = 0;
+	for (var part in this.scores) {
+    	    if (this.scores.hasOwnProperty(part)) {
+		for (var i=0; i < this.scores[part].length; ++i) {
+		    sum += this.scores[part][i];
+		}
+	    }
+	}
+	return sum;
     }
     /*this.add_svg_annotation = function () {
 	function sub_add_svg (node, n_left, scale_w, scale_x) {

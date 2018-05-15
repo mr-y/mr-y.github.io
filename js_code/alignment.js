@@ -51,6 +51,13 @@ function alignmentObject () {
 	this.add_partition(file_name, max_length);
 	return this.nOTUs();
     }
+    this.alignment_length = function () {
+	length = 0;
+	for (part in this.partitions) {
+	    if (this.partitions.hasOwnProperty(part)) { length += this.partitions[part]; }
+	}
+	return length;
+    }
     this.nOTUs = function () {
 	var n=0;
 	for (OTU in this.OTUs) {
@@ -183,5 +190,73 @@ function alignmentObject () {
 	    }
 	}
 	return(fasta);
+    }
+}
+
+function alphabet () {
+    this.nonASuncertain = true;
+    this.characters = {};
+    this.uncertain;
+    this.set_uncertainty = function (uncertainty) {
+	this.uncertain = uncertainty;
+	for (var chars in this.characters) {
+	    if (this.characters.hasOwnProperty(chars)) {
+		addBit(this.characters[chars],this.characters[uncertainty]);
+	    }
+	}
+    }
+    function setBit (bit) {
+	var value=0;
+	if (bit > 0) {
+	    value = 1;
+	    value = value << (bit-1);
+	}
+	return value;
+    }
+    function addBit (bit, bit_store) {
+	var value = setBit (bit);
+	bit_store = value | bit_store;
+    }
+    this.DNA = function (gapsASfifth = false) {
+	this.uncertain = 'N';
+	this.characters['A'] = this.characters['a'] = setBit(1);
+	this.characters['C'] = this.characters['c'] = setBit(2);
+	this.characters['G'] = this.characters['g'] = setBit(3);
+	this.characters['T'] = this.characters['t'] = this.characters['U'] = this.characters['u']= setBit(4);
+	this.characters['R'] = this.characters['r'] = this.characters['A'] | this.characters['G'];
+	this.characters['Y'] = this.characters['y'] = this.characters['C'] | this.characters['T'];
+	this.characters['S'] = this.characters['s'] = this.characters['G'] | this.characters['C']; 
+	this.characters['W'] = this.characters['w'] = this.characters['A'] | this.characters['T'];
+       	this.characters['K'] = this.characters['k'] = this.characters['G'] | this.characters['T'];
+       	this.characters['M'] = this.characters['m'] = this.characters['A'] | this.characters['C'];
+       	this.characters['B'] = this.characters['b'] = this.characters['C'] | this.characters['G'] | this.characters['T'];
+	this.characters['D'] = this.characters['d'] = this.characters['A'] | this.characters['G'] | this.characters['T'];
+	this.characters['H'] = this.characters['h'] = this.characters['A'] | this.characters['C'] | this.characters['T'];
+       	this.characters['V'] = this.characters['v'] = this.characters['A'] | this.characters['C'] | this.characters['G'];
+	this.characters['N'] = this.characters['n'] = this.characters['A'] | this.characters['C'] | this.characters['G'] | this.characters['T'];
+	if (gapsASfifth) {
+	    this.characters['.'] = this.characters['-'] = setBit(5);
+	    this.characters['?'] = this.characters['N'] | this.characters['-'];
+	}
+	else {
+	    this.characters['.'] = this.characters['-'] = 0;
+	    this.characters['?'] = this.characters['N'];
+	}
+    }
+    this.get_char = function (bit) {
+	for (chars in this.characters) {
+	    if (this.characters.hasOwnProperty(chars) && chars !== 'uncertain' && this.characters[chars] === bit) { return chars;}
+	}
+	return this.uncertain;
+    }
+    this.pars_compare = function (A, B) {
+	if (this.nonASuncertain && this.uncertain !== undefined && this.uncertain !== null) {
+	    if (this.characters[A] === 0) A = this.uncertain;
+	    if (this.characters[B] === 0) B = this.uncertain;
+	}
+	if (this.characters[B] === undefined || this.characters[B] === null) { alert("No char " + B); return [A,0]; }
+	else if (this.characters[A] === undefined || this.characters[A] === null) { alert("No char " + A); return [B,0]; }
+	else if (this.characters[B] & this.characters[A]) { return [this.get_char(this.characters[B] & this.characters[A]),0]; }
+	else { return [this.get_char(this.characters[B] | this.characters[A]),1]; }
     }
 }
