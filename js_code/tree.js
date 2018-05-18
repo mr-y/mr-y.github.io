@@ -9,8 +9,13 @@ function tree () {
     this.root = new node();
     //this.node = new node();
     //this._root = node;
-    var n_branches = 0;
+    //var n_branches = 0;
     this.scores = {};
+    this.copy = function () {
+	treeCopy = new tree();
+	treeCopy.root = copyComplexObject(this.root);
+	treeCopy.scores = copyComplexObject(this.scores);
+    }
     this.pars_newick = function (tree) { // tree should be a textstring witha newick formated tree
 	//var present = this._root;
 	var present = this.root;
@@ -36,7 +41,7 @@ function tree () {
 		branch_length="";
 	    }
 	    else if (tree[i] === ',') {
-		++n_branches;
+		//++n_branches;
 		read_mode = 'l';
 	       	if (label.length > 0) {
 		    present.name=label;
@@ -284,56 +289,149 @@ function tree () {
 	}
 	return sum;
     }
-    /*this.add_svg_annotation = function () {
-	function sub_add_svg (node, n_left, scale_w, scale_x) {
-	    var n_tot;
-	    var daughters;
-	    for (var i=0;;) {}
+    this.nni = function (branch) {
+	var newTrees = [];
+	function copyWithPointer(A, pointer) {
+	    var B = {};
+	    var new_pointer
+	    for (part in A) {
+		if (A.hasOwnProperty(part)) {
+		    if (A[part] instanceof Array) {
+			B[part] = copyComplexArray(A[part]);
+		    }
+		    else if (A[part] instanceof Object) {
+			B[part] = copyComplexObject(A[part]);
+		    }
+		    else { B[part] = A[part]; }
+		    if (pointer === A[part]) { new_pointer = B[part] }
+		}
+	    }
+	    return B;
 	}
-    }*/
-}
-/*
-function svg_annotations () {
-    function polyline (line) {
-	this.points = line;
-	this.style;
-	this.add_to_drawing = function (drawing) {
-	    drawing += "<polyline points=\"" + this.points + "\"";
-	    if (this.style) drawing += " style=\"" + this.style + "\"";
-	    drawing += " />\n";
+	if (branch.mom !== undefined && branch.mom !== null && branch.mom !== 0 && branch.children.length > 1) {
+	    if (branch.mom !== root) {
+		newTrees[0] = new tree();
+		newTrees[0].scores = {};
+		var newBranch={};
+		[newTrees[0].root, newBranch] = copyWithPointer(this.root,branch);
+		tempNode = new node();
+		tempNode = newBranch.children[1];
+		newBranch.children[1] = newBranch.children[0];
+		if (newBranch.mom.children[0] === newBranch) { newBranch.children[0] = newBranch.mom.children[1]; newBranch.mom.children[1] = tempNode; }
+		else { newBranch.children[0] = newBranch.mom.children[0]; newBranch.mom.children[0] = tempNode; }
+		newTrees[1] = new tree();
+		newTrees[1].scores = {};
+		[newTrees[1].root, newBranch] = copyWithPointer(this.root,branch);
+		tempNode = newBranch.children[0];
+		newBranch.children[0] = newBranch.children[1];
+		if (newBranch.mom.children[0] === newBranch) { newBranch.children[1] = newBranch.mom.children[1]; newBranch.mom.children[1] = tempNode; }
+		else { newBranch.children[1] = newBranch.mom.children[0]; newBranch.mom.children[0] = tempNode; }
+		
+	    }
+	    else {
+		var rootChild;
+		if (root.children[0] === branch && root.children[1].children.length >1) {
+		    rootChild=1;
+		}
+		else if (root.children[1] === branch && root.children[0].children.length >1) {
+		    rootChild=0;
+		}
+		    newTrees[0] = new tree();
+		    newTrees[0].scores = {};
+		    var newBranch={};
+		    [newTrees[0].root, newBranch] = copyWithPointer(this.root,branch);
+		    tempNode = new node();
+		    tempNode = newBranch.children[1];
+		    newBranch.children[1] = root.children[rootChild].children[0];
+		    root.children[rootChild].children[0] = tempNode;
+		    newTrees[1] = new tree();
+		    newTrees[1].scores = {};
+		    [newTrees[1].root, newBranch] = copyWithPointer(this.root,branch);
+		    tempNode = newBranch.children[1];
+                    newBranch.children[1] = newBranch.children[0].children[1];
+                    root.children[1].children[1] = tempNode;
+	    }
 	}
     }
-    function text (text, x, y) {
-	this.text = text;
-	this.x = x;
-	this.y = y;
-	this.fill;
-	this.transform;
-	this.add_to_drawing = function (drawing) {
-	    drawing += "<text x=\"" + x + "\" y=\"";
-	    if (this.fill) drawing += " fill=\"" + this.fill + "\"";
-	    if (this.transform) rawing += " transform=\"" + this.transform + "\"";
-	    drawing += ">" + this.text + "</text>";
+    this.add_svg_annotation = function (width,height) {
+	var nTaxa = this.nTips();
+	var perTaxa = (height/*-(height/(2*nTaxa))*/)/nTaxa;
+	var xScale = width/this.height();
+	var line_width = 3;
+	function sub_add_svg (node, x_start, toTheLeft) {
+	    var y_start;
+	    if (node.children.length > 0) {
+		var xy_end = [];
+		for (var i=0; i<node.children.length;++i){
+		    xy_end[i] = sub_add_svg(node.children[i], x_start + node.branch_length*xScale,toTheLeft);
+		}
+		if (xy_end) { y_start = (xy_end[0][1]+xy_end[xy_end.length-1][1])/2; }
+		for (var i=0; i<node.children.length;++i) {
+		    node.children[i]['svg'] = {};
+		    node.children[i]['svg']['polyline'] = [];
+		    node.children[i]['svg']['polyline'][0] = "points=\"" + x_start + "," + y_start + " " + x_start + "," + xy_end[i][1] + " " + xy_end[i][0] + "," + xy_end[i][1] + "\"";
+		    node.children[i]['svg']['polyline'][0] += " style=\"fill:none;stroke:black;stroke-width:" + line_width + "\"";
+		    node.children[i]['svg']['polyline'][0] += "comment=\"" + toTheLeft.nTips + " " + perTaxa + "\"";
+		}
+	    }
+	    else {
+		x_start = x_start+node.branch_length*xScale; y_start = (toTheLeft.nTips*perTaxa)+(0.5*perTaxa);
+		++toTheLeft.nTips;
+	    }
+    	    return [x_start,y_start];
 	}
+	sub_add_svg(this.root,0,{nTips:0});
     }
-    this.objects = [];
-    this.add_branch = function (branch_length, start, scale=1, end) {
-	this.objects.push(new polyline(start[0] + "," + start[1] + " " + start[0] + "," + (start[0]- branch_length * scale) + end[0] + "," + end[1]))
-    }
-    this.add_branch_label = function (label, branch_length, start, scale=1, x_offset, y_offset) {
-	this.objects.push(new text (label, start[0]-x_offset, start[1] + branch_length * scale - y_offset ));
-    }
-    this.add_tip_label = function(label, start, x_offset, y_offset) {
-	this.objects.push(new text (label, start[0]-x_offset, start[1] - y_offset ));
+    this.drawSVG = function ( width,height) {
+	var SVGdrawing = "<svg height=\"" + height + "\" width=\"" + width + "\">\n";
+	function subDraw (node) {
+	    if (node.hasOwnProperty('svg')) {
+		//SVGdrawing += '<polyline points="20,20 40,25 60,40 80,120 120,140 200,180"/>';
+		for (element in node['svg']) {
+		    if (node['svg'].hasOwnProperty(element)) {
+			for (var i=0; i < node['svg'][element].length; ++i) {
+			    SVGdrawing += "<" + element + " " + node['svg'][element][i] + " />\n"
+			}
+		    }
+		}
+	    }
+	    for (var i=0; i < node.children.length; ++i) {
+		subDraw(node.children[i]);
+	    }
+	}
+	subDraw (this.root);
+	SVGdrawing += "</svg>\n";
+	return SVGdrawing;
     }
 }
 
-function parsimony () {
-    this.tree = new tree();
-    this.alignment = new alignment();
-    this.score_partitions = function () {
-	
-
+function copyComplexObject(A) {
+    var B = {};
+    for (part in A) {
+	if (A.hasOwnProperty(part)) {
+	    if (A[part] instanceof Array) {
+		B[part] = copyComplexArray(A[part]);
+	    }
+	    else if (A[part] instanceof Object) {
+		B[part] = copyComplexObject(A[part]);
+	    }
+	    else { B[part] = A[part]; }
+	}
     }
+    return B;
 }
-*/
+
+function copyComplexArray(A) {
+    var B = [];
+    for (var i=0; i < A.length; ++i) {
+	if (A[i] instanceof Array) {
+	    B[i] = copyComplexArray(A[i]);
+	}
+	else if (A[i] instanceof Object) {
+	    B[i] = copyComplexObject(A[i]);
+	}
+	else { B[i] = A[i]; }
+    }
+    return B;
+}
+
