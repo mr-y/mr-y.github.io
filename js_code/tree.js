@@ -98,6 +98,22 @@ function tree () {
     	    }
 	}
     }
+    this.write = function() {
+	var output = "";
+	function writeNode(node) {
+	    if (node.children.length > 0) { output += '('; }
+	    for (var i=0; i < node.children.length; ++i) {
+		if (i !== 0) { output += ','; }
+		writeNode(node.children[i]);
+	    }
+	    if (node.children.length > 0) { output += ')'; }
+	    output += node.name;
+    	    output += ":" + node.branch_length;
+	}
+	writeNode(this.root);
+	output += ';';
+	return output;
+    }
     this.nTips = function () {
 	function subNtips(node) {
 	    var n=0;
@@ -291,68 +307,118 @@ function tree () {
     }
     this.nni = function (branch) {
 	var newTrees = [];
-	function copyWithPointer(A, pointer) {
-	    var B = {};
-	    var new_pointer
-	    for (part in A) {
-		if (A.hasOwnProperty(part)) {
-		    if (A[part] instanceof Array) {
-			B[part] = copyComplexArray(A[part]);
+	var newBranch=new node();
+	//console.log("Branch: " + branch);
+	function copyWithPointer(A, pointer, mother=null) {
+	    if (Array.isArray(A)) {
+                //console.log("Copy array");
+                var B = [];
+                for (var i=0; i< A.length; ++i) {
+                    if (A[i] instanceof Array || A[i] instanceof Object) {
+                        B[i] = copyWithPointer(A[i], pointer, mother);
+                    }
+                    else { B[i] = A[i]; }
+                }
+                return B;
+            }
+	    else if (A instanceof Object) {
+		var B = {};
+		if (A.mother) { B.mother = mother; mother = B; }
+		for (part in A) {
+		    if (A.hasOwnProperty(part) && part !== 'mother') {
+			if (A[part] instanceof Array || A[part] instanceof Object) {
+			    //console.log(part + ' ' + typeof A[part]);
+			    B[part] = copyWithPointer(A[part], pointer, mother);
+			}
+			else { B[part] = A[part]; }
 		    }
-		    else if (A[part] instanceof Object) {
-			B[part] = copyComplexObject(A[part]);
-		    }
-		    else { B[part] = A[part]; }
-		    if (pointer === A[part]) { new_pointer = B[part] }
 		}
+		if (A === pointer) { newBranch = B; }//console.log("Found branch"); }
+		//console.log("New pointer children: " + newBranch.children)
+		return B;
 	    }
-	    return B;
 	}
-	if (branch.mom !== undefined && branch.mom !== null && branch.mom !== 0 && branch.children.length > 1) {
-	    if (branch.mom !== root) {
+	if (!branch || branch === this.root || branch.children.length < 1) { console.log("Root"); return newTrees; }
+	if (branch.mother !== undefined && branch.mother !== null && branch.mother !== 0 && branch.children.length > 1) {
+	    if (branch.mother !== this.root) {
 		newTrees[0] = new tree();
 		newTrees[0].scores = {};
-		var newBranch={};
-		[newTrees[0].root, newBranch] = copyWithPointer(this.root,branch);
-		tempNode = new node();
+	       	newTrees[0].root = copyWithPointer(this.root,branch);
+		//console.log('Test: ' + Array.isArray(this.root.mother) );
+		var tempNode = new node();
+		/*for (part in newBranch) {
+		    if (newBranch.hasOwnProperty(part)) console.log(part + ' ' + newBranch[part]);
+		}*/
 		tempNode = newBranch.children[1];
+		//console.log("YY: " + tempNode.children);
 		newBranch.children[1] = newBranch.children[0];
-		if (newBranch.mom.children[0] === newBranch) { newBranch.children[0] = newBranch.mom.children[1]; newBranch.mom.children[1] = tempNode; }
-		else { newBranch.children[0] = newBranch.mom.children[0]; newBranch.mom.children[0] = tempNode; }
+		if (newBranch.mother.children[0] === newBranch) { newBranch.children[0] = newBranch.mother.children[1]; newBranch.mother.children[1] = tempNode; }
+		else { newBranch.children[0] = newBranch.mother.children[0]; newBranch.mother.children[0] = tempNode; }
 		newTrees[1] = new tree();
 		newTrees[1].scores = {};
-		[newTrees[1].root, newBranch] = copyWithPointer(this.root,branch);
+	       	newTrees[1].root = copyWithPointer(this.root,branch);
 		tempNode = newBranch.children[0];
 		newBranch.children[0] = newBranch.children[1];
-		if (newBranch.mom.children[0] === newBranch) { newBranch.children[1] = newBranch.mom.children[1]; newBranch.mom.children[1] = tempNode; }
-		else { newBranch.children[1] = newBranch.mom.children[0]; newBranch.mom.children[0] = tempNode; }
+		if (newBranch.mother.children[0] === newBranch) { newBranch.children[1] = newBranch.mother.children[1]; newBranch.mother.children[1] = tempNode; }
+		else { newBranch.children[1] = newBranch.mother.children[0]; newBranch.mother.children[0] = tempNode; }
 		
 	    }
 	    else {
+		//console.log("First child: " + this.root.children[0]);
 		var rootChild;
-		if (root.children[0] === branch && root.children[1].children.length >1) {
+		if (this.root.children[0] === branch) {
 		    rootChild=1;
+		    console.log("Left");
+		    if (this.root.children[1].children.length < 2) { return newTrees; }
 		}
-		else if (root.children[1] === branch && root.children[0].children.length >1) {
+		else if (this.root.children[1] === branch) {
 		    rootChild=0;
+		    console.log("Right");
+		    if (this.root.children[0].children.length < 2) { return newTrees; }
 		}
-		    newTrees[0] = new tree();
-		    newTrees[0].scores = {};
-		    var newBranch={};
-		    [newTrees[0].root, newBranch] = copyWithPointer(this.root,branch);
-		    tempNode = new node();
-		    tempNode = newBranch.children[1];
-		    newBranch.children[1] = root.children[rootChild].children[0];
-		    root.children[rootChild].children[0] = tempNode;
-		    newTrees[1] = new tree();
-		    newTrees[1].scores = {};
-		    [newTrees[1].root, newBranch] = copyWithPointer(this.root,branch);
-		    tempNode = newBranch.children[1];
-                    newBranch.children[1] = newBranch.children[0].children[1];
-                    root.children[1].children[1] = tempNode;
+		console.log("Gren " + rootChild);
+		newTrees[0] = new tree();
+	    	newTrees[0].scores = {};
+		newTrees[0].root = copyWithPointer(this.root,branch);
+		tempNode = new node();
+		tempNode = newBranch.children[1];
+		newBranch.children[1] = newTrees[0].root.children[rootChild].children[0];
+		root.children[rootChild].children[0] = tempNode;
+		newTrees[1] = new tree();
+		newTrees[1].scores = {};
+		newTrees[1].root = copyWithPointer(this.root,branch);
+		tempNode = newBranch.children[1];
+		newBranch.children[1] = newBranch.children[0].children[1];
+		root.children[1].children[1] = tempNode;
 	    }
 	}
+	return newTrees;
     }
+
+    this.getNodesAsArray = function () {
+	var nodes = [];
+	function getNodes (node) {
+	    for (var i = 0; i < node.children.length; ++i) {
+		getNodes(node.children[i]);
+	    }
+	    nodes.push(node);
+	}
+	getNodes(this.root);
+	return nodes;
+    }
+
+    /*this.nni_all = function () {
+	var nniTrees = []
+	function  transverse (node) {
+	    for (var i = 0; i < node.children.length; ++i) {
+		this.transverse(node.children[i]);
+	    }
+	    nniTrees.push(this.nni(node));
+	}
+	this.transverse(this.root);
+	return nniTrees;
+    }*/
+
     this.add_svg_annotation = function (width,height) {
 	var nTaxa = this.nTips();
 	var perTaxa = (height/*-(height/(2*nTaxa))*/)/nTaxa;
@@ -405,32 +471,37 @@ function tree () {
     }
 }
 
-function copyComplexObject(A) {
+function copyComplexObject(A,mother=null) {
     var B = {};
     for (part in A) {
 	if (A.hasOwnProperty(part)) {
-	    if (A[part] instanceof Array) {
-		B[part] = copyComplexArray(A[part]);
+	    if (part === 'mother') { B[part] = mother; }
+	    else if (A[part] instanceof Array) {
+		console.log("Object " + part );
+		B[part] = copyComplexArray(A[part], B);
 	    }
 	    else if (A[part] instanceof Object) {
-		B[part] = copyComplexObject(A[part]);
+		console.log("Array " + part);
+		B[part] = copyComplexObject(A[part], B);
 	    }
-	    else { B[part] = A[part]; }
+	    else { B[part] = A[part]; console.log(B[part] + " " +part);}
 	}
     }
     return B;
 }
 
-function copyComplexArray(A) {
+function copyComplexArray(A,mother=null) {
     var B = [];
     for (var i=0; i < A.length; ++i) {
 	if (A[i] instanceof Array) {
+	    console.log("Array " + part);
 	    B[i] = copyComplexArray(A[i]);
 	}
 	else if (A[i] instanceof Object) {
-	    B[i] = copyComplexObject(A[i]);
+	    console.log("Object " + part);
+	    B[i] = copyComplexObject(A[i], mother);
 	}
-	else { B[i] = A[i]; }
+	else { B[i] = A[i]; console.log(B[i] + " " +part);}
     }
     return B;
 }
