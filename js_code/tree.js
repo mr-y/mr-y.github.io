@@ -422,7 +422,7 @@ function tree () {
     this.add_svg_annotation = function (width,height) {
 	var nTaxa = this.nTips();
 	var perTaxa = (height/*-(height/(2*nTaxa))*/)/nTaxa;
-	var xScale = width/this.height();
+	var xScale = (width-width*0.1)/this.height();
 	var line_width = 3;
 	function sub_add_svg (node, x_start, toTheLeft) {
 	    var y_start;
@@ -432,17 +432,26 @@ function tree () {
 		    xy_end[i] = sub_add_svg(node.children[i], x_start + node.branch_length*xScale,toTheLeft);
 		}
 		if (xy_end) { y_start = (xy_end[0][1]+xy_end[xy_end.length-1][1])/2; }
+		x_start = x_start+node.branch_length*xScale;
 		for (var i=0; i<node.children.length;++i) {
-		    node.children[i]['svg'] = {};
+		    if (!node.children[i]['svg']) node.children[i]['svg'] = {};
 		    node.children[i]['svg']['polyline'] = [];
-		    node.children[i]['svg']['polyline'][0] = "points=\"" + x_start + "," + y_start + " " + x_start + "," + xy_end[i][1] + " " + xy_end[i][0] + "," + xy_end[i][1] + "\"";
-		    node.children[i]['svg']['polyline'][0] += " style=\"fill:none;stroke:black;stroke-width:" + line_width + "\"";
-		    node.children[i]['svg']['polyline'][0] += "comment=\"" + toTheLeft.nTips + " " + perTaxa + "\"";
+		    node.children[i]['svg']['polyline'][0] = {};
+		    node.children[i]['svg']['polyline'][0]['atributes'] = "points=\"" + x_start + "," + y_start + " " + x_start + "," + xy_end[i][1] + " " + xy_end[i][0] + "," + xy_end[i][1] + "\"";
+		    node.children[i]['svg']['polyline'][0]['atributes'] += " style=\"fill:none;stroke:black;stroke-width:" + line_width + "\"";
+		    node.children[i]['svg']['polyline'][0]['atributes'] += " id=\"node_" + toTheLeft.nTips + "\"";
 		}
 	    }
 	    else {
 		x_start = x_start+node.branch_length*xScale; y_start = (toTheLeft.nTips*perTaxa)+(0.5*perTaxa);
 		++toTheLeft.nTips;
+	    }
+	    if (node.name) {
+		if (!node['svg']) node['svg'] = {};
+		node['svg']['text'] = [];
+		node['svg']['text'][0] = {};
+		node['svg']['text'][0]['atributes'] = "x=\"" + x_start + "\" y=\"" + (y_start+5) + "\"";
+		node['svg']['text'][0]['value'] = node.name;
 	    }
     	    return [x_start,y_start];
 	}
@@ -452,11 +461,14 @@ function tree () {
 	var SVGdrawing = "<svg height=\"" + height + "\" width=\"" + width + "\">\n";
 	function subDraw (node) {
 	    if (node.hasOwnProperty('svg')) {
-		//SVGdrawing += '<polyline points="20,20 40,25 60,40 80,120 120,140 200,180"/>';
 		for (element in node['svg']) {
 		    if (node['svg'].hasOwnProperty(element)) {
 			for (var i=0; i < node['svg'][element].length; ++i) {
-			    SVGdrawing += "<" + element + " " + node['svg'][element][i] + " />\n"
+			    SVGdrawing += "<" + element;
+			    if (node['svg'][element][i]['atributes']) SVGdrawing += " " + node['svg'][element][i]['atributes'];
+			    SVGdrawing += ">";
+			    if (node['svg'][element][i]['value']) SVGdrawing += node['svg'][element][i]['value'];
+			    SVGdrawing += "</" + element + ">";
 			}
 		    }
 		}
