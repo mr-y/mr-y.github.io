@@ -191,6 +191,36 @@ function alignmentObject () {
 	}
 	return(fasta);
     }
+    this.bootRep = function () {
+	var rep = new alignmentObject();
+	rep.linebreak = this.linebreak;
+	var chars = {};
+	for (var OTU in this.OTUs) {
+	    if (this.OTUs.hasOwnProperty(OTU)) {
+		rep.OTUs[OTU] = {};
+		for (var pars in this.OTUs[OTU]) {
+		    if (this.OTUs[OTU].hasOwnProperty(pars)) {
+			if (!chars.hasOwnProperty(pars)) {
+			    chars[pars] = []
+			    for (var col=0; col < this.OTUs[OTU][pars].length; ++col) {
+				var selected = Math.floor(Math.random()*this.OTUs[OTU][pars].length);
+				chars[pars].push(selected);
+				//console.log(selected);
+			    }
+			}
+			rep.OTUs[OTU][pars] = "";
+			for (var i = 0; i < chars[pars].length; ++i) {
+			    //console.log();
+			    rep.OTUs[OTU][pars] += this.OTUs[OTU][pars].charAt(chars[pars][i]);
+			}
+		    }
+		}
+	    }
+	}
+	rep.partition_order=this.partition_order;
+	rep.partitions=this.partitions;
+	return(rep);
+    }
 }
 
 function alphabet () {
